@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using kova.api.Models;
 
 namespace kova.api.Controllers
 {
@@ -11,6 +12,22 @@ namespace kova.api.Controllers
     [Route("api/[controller]")]
     public class ValuesController : Controller
     {
+        private kovaContext context;
+        public ValuesController(kovaContext context)
+        {
+            this.context = context;
+        }
+
+        [HttpGet("kova")]
+        public IEnumerable<object> GetKovaOrg()
+        {
+            var orgs = this.context.TOrganizationOrganization;
+            return orgs.Select(v=> new {
+                v.Name,
+                v.Department
+            });
+        }
+
         // GET api/values
         [HttpGet]
         public IEnumerable<string> Get()
