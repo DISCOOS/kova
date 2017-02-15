@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Linq;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using kova.api.Models;
 
 namespace kova.api.Authentication
 {
@@ -12,13 +14,16 @@ namespace kova.api.Authentication
     {
         private readonly RequestDelegate _next;
         private readonly TokenProviderOptions _options;
+        private readonly kovaContext _kovaContext;
 
         public TokenProviderMiddleware(
             RequestDelegate next,
-            IOptions<TokenProviderOptions> options)
+            IOptions<TokenProviderOptions> options,
+            kovaContext kovaContext)
         {
             _next = next;
             _options = options.Value;
+            _kovaContext = kovaContext;
         }
 
         public Task Invoke(HttpContext context)
@@ -62,7 +67,7 @@ namespace kova.api.Authentication
         new Claim(JwtRegisteredClaimNames.Sub, username),
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         new Claim(JwtRegisteredClaimNames.Iat, new DateTimeOffset(now).ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
-            };
+            }.Union(identity.Claims);
 
             // Create the JWT and write it to a string
             var jwt = new JwtSecurityToken(
@@ -87,10 +92,14 @@ namespace kova.api.Authentication
 
         private Task<ClaimsIdentity> GetIdentity(string username, string password)
         {
-            // DON'T do this in production, obviously!
-            if (username == "TEST" && password == "TEST123")
+            var user = _kovaContext.TOrganizationPerson.FirstOrDefault(v => v.Email == username);
+
+            if (user != null)
             {
-                return Task.FromResult(new ClaimsIdentity(new System.Security.Principal.GenericIdentity(username, "Token"), new Claim[] { }));
+                return Task.FromResult(new ClaimsIdentity(new System.Security.Principal.GenericIdentity(username, "Token"), new Claim[] {
+                    new Claim(ClaimTypes.Email, user.Email, ClaimValueTypes.Email, null),
+                    new Claim(ClaimTypes.Name, $"{user.FirstName} {user.LastName}", ClaimValueTypes.String, null)
+                }));
             }
 
             // Credentials are invalid, or account doesn't exist

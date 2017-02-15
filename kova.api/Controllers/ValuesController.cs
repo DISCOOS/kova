@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using kova.api.Models;
+using System.Security.Claims;
 
 namespace kova.api.Controllers
 {
@@ -19,13 +20,10 @@ namespace kova.api.Controllers
         }
 
         [HttpGet]
-        public IEnumerable<object> Get()
+        public object Get()
         {
-            var orgs = this.context.TOrganizationOrganization;
-            return orgs.Select(v=> new {
-                v.Name,
-                v.Department
-            });
+            var user = User.Identity as ClaimsIdentity;
+            return new { Name = user.Name, Claims = user.Claims };
         }
 
         // GET api/values/5
