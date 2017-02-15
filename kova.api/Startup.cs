@@ -11,6 +11,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using kova.api.Authentication;
 using Microsoft.Extensions.Options;
+using kova.api.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace kova.api
 {
@@ -21,6 +23,7 @@ namespace kova.api
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .AddJsonFile("appsettings.secrets.json", optional: true, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
                 .AddEnvironmentVariables();
             Configuration = builder.Build();
@@ -33,6 +36,9 @@ namespace kova.api
         {
             // Add framework services.
             services.AddMvc();
+
+            var connection = Configuration.GetConnectionString("kova");
+            services.AddDbContext<kovaContext>(options => options.UseSqlServer(connection));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
