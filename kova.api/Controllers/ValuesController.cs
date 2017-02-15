@@ -18,21 +18,14 @@ namespace kova.api.Controllers
             this.context = context;
         }
 
-        [HttpGet("kova")]
-        public IEnumerable<object> GetKovaOrg()
+        [HttpGet]
+        public IEnumerable<object> Get()
         {
             var orgs = this.context.TOrganizationOrganization;
             return orgs.Select(v=> new {
                 v.Name,
                 v.Department
             });
-        }
-
-        // GET api/values
-        [HttpGet]
-        public IEnumerable<string> Get()
-        {
-            return new string[] { "value1", "value2", "value3" };
         }
 
         // GET api/values/5
