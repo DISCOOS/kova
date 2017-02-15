@@ -87,6 +87,7 @@ namespace kova.api
                 Audience = "API End User",
                 Issuer = "api.kova.no",
                 SigningCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256),
+                Expiration = TimeSpan.FromHours(1)
             };
 
             app.UseMiddleware<TokenProviderMiddleware>(Options.Create(options));
