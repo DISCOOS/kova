@@ -85,9 +85,6 @@ namespace kova.api
 
             app.UseMiddleware<TokenProviderMiddleware>(Options.Create(options));
 
-
-
-
             app.UseMvc();
         }
     }
