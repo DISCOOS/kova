@@ -4,5 +4,6 @@
     {
         public const string PersonName = "http://schemas.kova.no/data/persons/name";
         public const string OrganizationRef = "http://schemas.kova.no/data/persons/organizationref";
+        public const string OrganizationFullName = "http://schemas.kova.no/data/organizations/fullname";
     }
 }
