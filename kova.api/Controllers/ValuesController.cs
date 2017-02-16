@@ -28,8 +28,9 @@ namespace kova.api.Controllers
             {
                 Login = user.Name,
                 Name = user.Claims.FirstOrDefault(v => v.Type == KovaClaimTypes.PersonName)?.Value,
+                Email = user.Claims.FirstOrDefault(v => v.Type == ClaimTypes.Email)?.Value,
                 OrganizationRef = user.Claims.FirstOrDefault(v => v.Type == KovaClaimTypes.OrganizationRef)?.Value,
-                Email = user.Claims.FirstOrDefault(v => v.Type == ClaimTypes.Email)?.Value
+                Organization = user.Claims.FirstOrDefault(v => v.Type == KovaClaimTypes.OrganizationFullName)?.Value
             };
         }
 
