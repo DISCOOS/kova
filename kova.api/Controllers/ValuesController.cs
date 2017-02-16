@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using kova.api.Models;
 using System.Security.Claims;
+using kova.api.Authentication;
 
 namespace kova.api.Controllers
 {
@@ -23,7 +24,13 @@ namespace kova.api.Controllers
         public object Get()
         {
             var user = User.Identity as ClaimsIdentity;
-            return new { Name = user.Name, Claims = user.Claims };
+            return new
+            {
+                Login = user.Name,
+                Name = user.Claims.FirstOrDefault(v => v.Type == KovaClaimTypes.PersonName)?.Value,
+                OrganizationRef = user.Claims.FirstOrDefault(v => v.Type == KovaClaimTypes.OrganizationRef)?.Value,
+                Email = user.Claims.FirstOrDefault(v => v.Type == ClaimTypes.Email)?.Value
+            };
         }
 
         // GET api/values/5

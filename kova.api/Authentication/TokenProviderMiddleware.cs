@@ -96,14 +96,22 @@ namespace kova.api.Authentication
 
             if (user != null)
             {
+                _kovaContext.Entry(user).Navigation(nameof(user.MemberGroupRefNavigation)).Load();
+
                 return Task.FromResult(new ClaimsIdentity(new System.Security.Principal.GenericIdentity(username, "Token"), new Claim[] {
                     new Claim(ClaimTypes.Email, user.Email, ClaimValueTypes.Email, null),
-                    new Claim(ClaimTypes.Name, $"{user.FirstName} {user.LastName}", ClaimValueTypes.String, null)
+                    new Claim(KovaClaimTypes.PersonName, $"{user.Name}", ClaimValueTypes.String, null),
+                    new Claim(KovaClaimTypes.OrganizationRef, user.MemberGroupRefNavigation.OrganizationRef.ToString(), ClaimValueTypes.String)
                 }));
             }
 
             // Credentials are invalid, or account doesn't exist
             return Task.FromResult<ClaimsIdentity>(null);
         }
+
+
     }
+
+
+
 }

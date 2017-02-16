@@ -7,6 +7,11 @@ namespace kova.api.Models
 {
     public partial class TOrganizationPerson
     {
+        public string Name
+        {
+            get { return $"{FirstName} {LastName}"; }
+        }
+
         public bool ValidatePassword(string password)
         {
             if (string.IsNullOrEmpty(Salt) || string.IsNullOrEmpty(Hash))
