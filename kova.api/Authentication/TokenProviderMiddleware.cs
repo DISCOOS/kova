@@ -92,7 +92,7 @@ namespace kova.api.Authentication
 
         private Task<ClaimsIdentity> GetIdentity(string username, string password)
         {
-            var user = _kovaContext.TOrganizationPerson.FirstOrDefault(v => v.Email == username);
+            var user = _kovaContext.TOrganizationPerson.FirstOrDefault(v => v.Email == username && v.ValidatePassword(password));
 
             if (user != null)
             {
