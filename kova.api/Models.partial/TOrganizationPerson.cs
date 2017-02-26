@@ -1,10 +1,14 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace kova.api.Models
 {
+    [MetadataType(typeof(TOrganizationPerson_Metadata))]
     public partial class TOrganizationPerson
     {
         public string Name
@@ -56,5 +60,12 @@ namespace kova.api.Models
             randomizer.GetBytes(buffer);
             return buffer;
         }
+
+    }
+
+    public class TOrganizationPerson_Metadata
+    {
+        [JsonIgnore]
+        public byte[] Salt { get; set; }
     }
 }

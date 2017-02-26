@@ -35,7 +35,11 @@ namespace kova.api
         public void ConfigureServices(IServiceCollection services)
         {
             // Add framework services.
-            services.AddMvc();
+            services.AddMvc()
+                .AddJsonOptions(options =>
+                {
+                    options.SerializerSettings.Converters = new[] { new kovaJsonConverter() };
+                });
 
             var connection = Configuration.GetConnectionString("kova");
             services.AddDbContext<kovaContext>(options => options.UseSqlServer(connection));
