@@ -43,6 +43,11 @@ namespace kova.api
 
             var connection = Configuration.GetConnectionString("kova");
             services.AddDbContext<kovaContext>(options => options.UseSqlServer(connection));
+
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new Swashbuckle.AspNetCore.Swagger.Info() { Title = "KOVA API", Version = "v1" });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -97,6 +102,12 @@ namespace kova.api
             app.UseMiddleware<TokenProviderMiddleware>(Options.Create(options));
 
             app.UseMvc();
+
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Kova API v1");
+            });
         }
     }
 }
