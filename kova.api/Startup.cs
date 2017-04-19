@@ -101,7 +101,11 @@ namespace kova.api
 
             app.UseMiddleware<TokenProviderMiddleware>(Options.Create(options));
 
-            app.UseMvc();
+            app.UseCors(v => v
+                .AllowAnyOrigin()
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+            ).UseMvc();
 
             app.UseSwagger();
             app.UseSwaggerUI(c =>
