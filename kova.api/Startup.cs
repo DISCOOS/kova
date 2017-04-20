@@ -99,13 +99,12 @@ namespace kova.api
                 Expiration = TimeSpan.FromHours(1)
             };
 
-            app.UseMiddleware<TokenProviderMiddleware>(Options.Create(options));
-
             app.UseCors(v => v
-                .AllowAnyOrigin()
-                .AllowAnyHeader()
-                .AllowAnyMethod()
-            ).UseMvc();
+                    .AllowAnyOrigin()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod())
+                .UseMiddleware<TokenProviderMiddleware>(Options.Create(options))
+                .UseMvc();
 
             app.UseSwagger();
             app.UseSwaggerUI(c =>
