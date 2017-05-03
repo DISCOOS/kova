@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using kova.api.Models;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 using kova.api.Authentication;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
@@ -14,49 +15,44 @@ namespace kova.api.Controllers
 {
     [Authorize]
     [Route("api/[controller]")]
-    public class PersonsController : Controller
+    public class PersonsController : KovaControllerBase
     {
-        private kovaContext context;
-        public PersonsController(kovaContext context)
+        public PersonsController(kovaContext context) : base(context)
         {
-            this.context = context;
+            
         }
 
-        // GET: api/values
+        // GET: api/persons
         [HttpGet]
         public IQueryable<TOrganizationPerson> Get()
         {
-            var user = User.Identity as ClaimsIdentity;
-            string organizationRefAsString = user.Claims.FirstOrDefault(v => v.Type == KovaClaimTypes.OrganizationRef)?.Value;
-            if (string.IsNullOrEmpty(organizationRefAsString))
-                throw new Exception("Not authorized");
-            Guid organizationRef = new Guid(organizationRefAsString);
-
-            return context.TOrganizationPerson.Where(v => v.MemberGroupRefNavigation.OrganizationRef == organizationRef);
+            return context.TOrganizationPerson
+                .Where(v => v.MemberGroupRefNavigation.OrganizationRef == GetOrganizationRef());
         }
 
-        // GET api/values/5
-        [HttpGet("{id}")]
-        public string Get(int id)
+        // GET api/persons/00000000-0000-0000-0000-000000000000
+        [HttpGet("{primKey}")]
+        public TOrganizationPerson Get(Guid primKey)
         {
-            return "value";
+            return context.TOrganizationPerson
+                .FirstOrDefault(v => v.MemberGroupRefNavigation.OrganizationRef == GetOrganizationRef() && v.PrimKey == primKey);
         }
 
-        // POST api/values
+        // POST api/persons
         [HttpPost]
-        public void Post([FromBody]string value)
+        public void Post([FromBody]TOrganizationPerson person)
         {
         }
 
-        // PUT api/values/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody]string value)
+        // PUT api/persons/00000000-0000-0000-0000-000000000000
+        [HttpPut("{primKey}")]
+        public void Put(Guid primKey, [FromBody]TOrganizationPerson person)
         {
         }
 
-        // DELETE api/values/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
+        // DELETE api/persons/00000000-0000-0000-0000-000000000000
+        [HttpDelete("{primKey}")]
+        public void Delete(Guid primKey)
         {
         }
     }

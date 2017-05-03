@@ -86,7 +86,8 @@ namespace kova.api.Authentication
                 user = new {
                     email = claims.FirstOrDefault(v=>v.Type == ClaimTypes.Email)?.Value,
                     name = claims.FirstOrDefault(v => v.Type == KovaClaimTypes.PersonName)?.Value,
-                    organization = claims.FirstOrDefault(v => v.Type == KovaClaimTypes.OrganizationFullName)?.Value
+                    organization = claims.FirstOrDefault(v => v.Type == KovaClaimTypes.OrganizationFullName)?.Value,
+                    privileges = int.Parse(claims.FirstOrDefault(v => v.Type == KovaClaimTypes.Privileges)?.Value ?? "0"),
                 }
             };
 
@@ -97,18 +98,28 @@ namespace kova.api.Authentication
 
         private Task<ClaimsIdentity> GetIdentity(string username, string password)
         {
-            var user = _kovaContext.TOrganizationPerson.FirstOrDefault(v => v.Email == username && v.ValidatePassword(password));
+            var user = _kovaContext.TOrganizationPerson
+                .FirstOrDefault(v => v.Email == username && v.ValidatePassword(password));
 
             if (user != null)
             {
                 _kovaContext.Entry(user).Navigation(nameof(user.MemberGroupRefNavigation)).Load();
                 _kovaContext.Entry(user.MemberGroupRefNavigation).Navigation(nameof(user.MemberGroupRefNavigation.OrganizationRefNavigation)).Load();
+                _kovaContext.Entry(user).Collection(u => u.TOrganizationGroupMember).Load();
+
+                int privileges = 0;
+                foreach (var membership in user.TOrganizationGroupMember)
+                {
+                    _kovaContext.Entry(membership).Navigation(nameof(membership.GroupRefNavigation)).Load();
+                    privileges |= membership.GroupRefNavigation.Privileges;
+                }
 
                 return Task.FromResult(new ClaimsIdentity(new System.Security.Principal.GenericIdentity(username, "Token"), new Claim[] {
                     new Claim(ClaimTypes.Email, user.Email, ClaimValueTypes.Email, null),
                     new Claim(KovaClaimTypes.PersonName, $"{user.Name}", ClaimValueTypes.String, null),
                     new Claim(KovaClaimTypes.OrganizationRef, user.MemberGroupRefNavigation.OrganizationRef.ToString(), ClaimValueTypes.String),
-                    new Claim(KovaClaimTypes.OrganizationFullName, user.MemberGroupRefNavigation.OrganizationRefNavigation.FullName, ClaimValueTypes.String)
+                    new Claim(KovaClaimTypes.OrganizationFullName, user.MemberGroupRefNavigation.OrganizationRefNavigation.FullName, ClaimValueTypes.String),
+                    new Claim(KovaClaimTypes.Privileges, $"{privileges}", ClaimValueTypes.Integer32)
                 }));
             }
 
