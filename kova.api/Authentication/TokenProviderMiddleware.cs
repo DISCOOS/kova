@@ -84,6 +84,7 @@ namespace kova.api.Authentication
                 access_token = encodedJwt,
                 expires_in = (int)_options.Expiration.TotalSeconds,
                 user = new {
+                    personRef = claims.FirstOrDefault(v => v.Type == KovaClaimTypes.PersonRef)?.Value,
                     email = claims.FirstOrDefault(v=>v.Type == ClaimTypes.Email)?.Value,
                     name = claims.FirstOrDefault(v => v.Type == KovaClaimTypes.PersonName)?.Value,
                     organization = claims.FirstOrDefault(v => v.Type == KovaClaimTypes.OrganizationFullName)?.Value,
@@ -115,6 +116,7 @@ namespace kova.api.Authentication
                 }
 
                 return Task.FromResult(new ClaimsIdentity(new System.Security.Principal.GenericIdentity(username, "Token"), new Claim[] {
+                    new Claim(KovaClaimTypes.PersonRef, $"{user.PrimKey}", ClaimValueTypes.String),
                     new Claim(ClaimTypes.Email, user.Email, ClaimValueTypes.Email, null),
                     new Claim(KovaClaimTypes.PersonName, $"{user.Name}", ClaimValueTypes.String, null),
                     new Claim(KovaClaimTypes.OrganizationRef, user.MemberGroupRefNavigation.OrganizationRef.ToString(), ClaimValueTypes.String),
