@@ -13,6 +13,9 @@ using kova.api.Authentication;
 using Microsoft.Extensions.Options;
 using kova.api.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
+using System.IO;
+using Microsoft.AspNetCore.Http;
 
 namespace kova.api
 {
@@ -53,6 +56,14 @@ namespace kova.api
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
+            // Serve any file from the .well-known folder. Required for automated certificate from letsencrypt
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @".well-known")),
+                RequestPath = new PathString("/.well-known"),
+                ServeUnknownFileTypes = true // serve extensionless file
+            });
+
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
