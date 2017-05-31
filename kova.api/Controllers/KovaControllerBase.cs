@@ -30,4 +30,22 @@ namespace kova.api.Controllers
             return new Guid(organizationRefAsString);
         }
     }
+
+    public class KovaModelControllerBase<T> : KovaControllerBase
+    {
+        public KovaModelControllerBase(kovaContext context) : base(context)
+        {
+            
+        }
+
+        protected virtual System.Linq.Expressions.Expression<Func<T, bool>> AccessCriteria
+        {
+            get
+            {
+                return v => false;
+            }
+        }
+    }
 }
+
+

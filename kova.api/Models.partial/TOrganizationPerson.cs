@@ -61,11 +61,12 @@ namespace kova.api.Models
             return buffer;
         }
 
-    }
 
-    public class TOrganizationPerson_Metadata
-    {
-        [JsonIgnore]
-        public byte[] Salt { get; set; }
+        public class TOrganizationPerson_Metadata
+        {
+            [JsonIgnore]
+            public byte[] Salt { get; set; }
+        }
+
     }
 }
