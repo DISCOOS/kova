@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using kova.api.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace kova.api.Controllers
 {
@@ -13,11 +14,10 @@ namespace kova.api.Controllers
         protected override Expression<Func<TOrganizationMap, bool>> AccessCriteria => v=>v.OrganizationRef == GetOrganizationRef();
 
         [HttpGet("{primkey}/poi")]
-        public async Task<IEnumerable<TOrganizationPoi>> GetPois(Guid primkey)
+        public IEnumerable<TOrganizationPoi> GetPois(Guid primkey)
         {
-            var map = Get(primkey);
-            await context.Entry(map).Collection(m => m.TOrganizationPoi).LoadAsync();
-            return map.TOrganizationPoi;
+            //await context.Entry(map).Collection(m => m.TOrganizationPoi).LoadAsync();
+            return context.TOrganizationPoi.FromSql($"SELECT MapRef, Position.ToString() AS Position, Name, Symbol, PrimKey, TimeStamp, Created, CreatedBy, Updated, UpdatedBy FROM [dbo].[t_Organization_Poi] WHERE MapRef = '{primkey}'");
         }
     }
 }

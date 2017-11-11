@@ -16,6 +16,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using System.IO;
 using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
 
 namespace kova.api
 {
@@ -41,7 +42,7 @@ namespace kova.api
             services.AddMvc()
                 .AddJsonOptions(options =>
                 {
-                    options.SerializerSettings.Converters = new[] { new kovaJsonConverter() };
+                    options.SerializerSettings.Converters = new JsonConverter[] { new kovaJsonConverter(), new PoiConverter() };
                 });
 
             var connection = Configuration.GetConnectionString("kova");
