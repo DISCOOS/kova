@@ -34,8 +34,8 @@ namespace kova.api.Models
                 jsonObject.Remove("position");
                 jsonObject.Add("position", JToken.FromObject(new
                 {
-                    lat = longLat[0],
-                    @long = longLat[1]
+                    lat = longLat[1],
+                    @long = longLat[0]
                 }));
                 jsonObject.WriteTo(writer);
             }
