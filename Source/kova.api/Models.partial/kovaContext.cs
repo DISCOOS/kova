@@ -8,7 +8,7 @@ namespace kova.api.Models
 {
     public partial class kovaContext
     {
-        public kovaContext(DbContextOptions<kovaContext> options) : base(options)
+        public kovaContext(DbContextOptions options) : base(options)
         {
 
         }

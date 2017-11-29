@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace kova.api.Models
 {
-    [MetadataType(typeof(TOrganizationPerson_Metadata))]
+    [ModelMetadataType(typeof(TOrganizationPerson_Metadata))]
     public partial class TOrganizationPerson
     {
         public string Name

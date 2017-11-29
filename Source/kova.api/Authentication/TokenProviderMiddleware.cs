@@ -18,12 +18,13 @@ namespace kova.api.Authentication
 
         public TokenProviderMiddleware(
             RequestDelegate next,
-            IOptions<TokenProviderOptions> options,
-            kovaContext kovaContext)
+            IOptions<TokenProviderOptions> options)
+//            ,
+//            kovaContext kovaContext)
         {
             _next = next;
             _options = options.Value;
-            _kovaContext = kovaContext;
+            //_kovaContext = kovaContext;
         }
 
         public Task Invoke(HttpContext context)
