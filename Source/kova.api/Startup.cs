@@ -44,6 +44,9 @@ namespace kova.api
         {
             var connection = Configuration.GetConnectionString("kova");
             services.AddDbContext<kovaContext>(options => options.UseSqlServer(connection));
+            
+            // Add DbContextOptions, so singleton classes can also depend on the DB Context
+            services.AddSingleton(typeof(DbContextOptions), new DbContextOptionsBuilder().UseSqlServer(connection).Options);
 
             // Add framework services.
             services.AddMvc()
@@ -120,7 +123,7 @@ namespace kova.api
             };
 
             app.UseAuthentication();
-
+            
             app.UseCors(v => v
                     .AllowAnyOrigin()
                     .AllowAnyHeader()

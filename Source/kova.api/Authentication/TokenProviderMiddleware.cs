@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using kova.api.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace kova.api.Authentication
 {
@@ -14,17 +15,16 @@ namespace kova.api.Authentication
     {
         private readonly RequestDelegate _next;
         private readonly TokenProviderOptions _options;
-        private readonly kovaContext _kovaContext;
+        private kovaContext _kovaContext;
 
         public TokenProviderMiddleware(
             RequestDelegate next,
-            IOptions<TokenProviderOptions> options)
-//            ,
-//            kovaContext kovaContext)
+            IOptions<TokenProviderOptions> options,
+            DbContextOptions dbOptions)
         {
             _next = next;
             _options = options.Value;
-            //_kovaContext = kovaContext;
+            _kovaContext = new kovaContext(dbOptions);
         }
 
         public Task Invoke(HttpContext context)
