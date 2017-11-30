@@ -82,8 +82,6 @@ namespace kova.api
                 .AddJwtBearer(options =>
                 {
                     options.TokenValidationParameters = tokenValidationParameters;
-                    options.Audience = "API End User";
-                    options.Authority = "api.kova.no";
                     options.RequireHttpsMetadata = false;
                 });
 
