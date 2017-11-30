@@ -26,18 +26,9 @@ namespace kova.api
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
-            //var builder = new ConfigurationBuilder()
-            //    .SetBasePath(env.ContentRootPath)
-            //    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-            //    .AddJsonFile("appsettings.secrets.json", optional: true, reloadOnChange: true)
-            //    .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
-            //    .AddEnvironmentVariables();
-            //Configuration = builder.Build();
         }
 
         public IConfiguration Configuration { get; }
-        // secretKey contains a secret passphrase only your server knows
-        private string secretKey = "mysupersecret_secretkey!123";
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -52,52 +43,30 @@ namespace kova.api
             services.AddMvc()
                 .AddJsonOptions(options =>
                 {
-                    options.SerializerSettings.Converters = new JsonConverter[] { new kovaJsonConverter(), new PoiConverter() };
+                    // Customize json generation
+                    options.SerializerSettings.Converters = new JsonConverter[] {
+                        new kovaJsonConverter(),
+                        new PoiConverter()
+                    };
                 });
 
-            // Add JWT generation endpoint:
-            var signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(secretKey));
-            var tokenValidationParameters = new TokenValidationParameters
-            {
-                // The signing key must match!
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = signingKey,
-
-                // Validate the JWT Issuer (iss) claim
-                ValidateIssuer = true,
-                ValidIssuer = "api.kova.no",
-
-                // Validate the JWT Audience (aud) claim
-                ValidateAudience = true,
-                ValidAudience = "API End User",
-
-                // Validate the token expiry
-                ValidateLifetime = true,
-
-                // If you want to allow a certain amount of clock drift, set that here:
-                ClockSkew = TimeSpan.Zero
-            };
-
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
-                {
-                    options.TokenValidationParameters = tokenValidationParameters;
-                    options.RequireHttpsMetadata = false;
-                });
-
+            // Custom kova authentication
+            services.AddKovaAuthentication(Configuration);
+            
+            // Swagger API documentation
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new Swashbuckle.AspNetCore.Swagger.Info() { Title = "KOVA API", Version = "v1" });
             });
         }
-        
+
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            //if (env.IsDevelopment())
-            //{
-            //    app.UseDeveloperExceptionPage();
-            //}
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
 
             // Serve any file from the .well-known folder. Required for automated certificate from letsencrypt
             app.UseStaticFiles(new StaticFileOptions
@@ -107,28 +76,19 @@ namespace kova.api
                 ServeUnknownFileTypes = true // serve extensionless file
             });
 
-            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
-            loggerFactory.AddDebug();
+            // Setup kova authentication middleware
+            app.UseKovaAuthentication(Configuration);
 
-
-            var signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(secretKey));
-            var options = new TokenProviderOptions
-            {
-                Audience = "API End User",
-                Issuer = "api.kova.no",
-                SigningCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256),
-                Expiration = TimeSpan.FromHours(1)
-            };
-
-            app.UseAuthentication();
-            
+            // Alle skal få
             app.UseCors(v => v
                     .AllowAnyOrigin()
                     .AllowAnyHeader()
-                    .AllowAnyMethod())
-                .UseMiddleware<TokenProviderMiddleware>(Options.Create(options))
-                .UseMvc();
+                    .AllowAnyMethod());
 
+            // Standard ASPNet API     
+            app.UseMvc();
+
+            // Swagger API documentation
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
