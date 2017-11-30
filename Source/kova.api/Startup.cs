@@ -17,37 +17,43 @@ using Microsoft.Extensions.FileProviders;
 using System.IO;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace kova.api
 {
     public class Startup
     {
-        public Startup(IHostingEnvironment env)
+        public Startup(IConfiguration configuration)
         {
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(env.ContentRootPath)
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                .AddJsonFile("appsettings.secrets.json", optional: true, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
-                .AddEnvironmentVariables();
-            Configuration = builder.Build();
+            Configuration = configuration;
         }
 
-        public IConfigurationRoot Configuration { get; }
+        public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            var connection = Configuration.GetConnectionString("kova");
+            services.AddDbContext<kovaContext>(options => options.UseSqlServer(connection));
+            
+            // Add DbContextOptions, so singleton classes can also depend on the DB Context
+            services.AddSingleton(typeof(DbContextOptions), new DbContextOptionsBuilder().UseSqlServer(connection).Options);
+
             // Add framework services.
             services.AddMvc()
                 .AddJsonOptions(options =>
                 {
-                    options.SerializerSettings.Converters = new JsonConverter[] { new kovaJsonConverter(), new PoiConverter() };
+                    // Customize json generation
+                    options.SerializerSettings.Converters = new JsonConverter[] {
+                        new kovaJsonConverter(),
+                        new PoiConverter()
+                    };
                 });
 
-            var connection = Configuration.GetConnectionString("kova");
-            services.AddDbContext<kovaContext>(options => options.UseSqlServer(connection));
-
+            // Custom kova authentication
+            services.AddKovaAuthentication(Configuration);
+            
+            // Swagger API documentation
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new Swashbuckle.AspNetCore.Swagger.Info() { Title = "KOVA API", Version = "v1" });
@@ -55,8 +61,13 @@ namespace kova.api
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
+
             // Serve any file from the .well-known folder. Required for automated certificate from letsencrypt
             app.UseStaticFiles(new StaticFileOptions
             {
@@ -65,59 +76,19 @@ namespace kova.api
                 ServeUnknownFileTypes = true // serve extensionless file
             });
 
-            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
-            loggerFactory.AddDebug();
+            // Setup kova authentication middleware
+            app.UseKovaAuthentication(Configuration);
 
-            // secretKey contains a secret passphrase only your server knows
-            var secretKey = "mysupersecret_secretkey!123";
-
-            // Add JWT generation endpoint:
-            var signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(secretKey));
-
-
-            var tokenValidationParameters = new TokenValidationParameters
-            {
-                // The signing key must match!
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = signingKey,
-
-                // Validate the JWT Issuer (iss) claim
-                ValidateIssuer = true,
-                ValidIssuer = "api.kova.no",
-
-                // Validate the JWT Audience (aud) claim
-                ValidateAudience = true,
-                ValidAudience = "API End User",
-
-                // Validate the token expiry
-                ValidateLifetime = true,
-
-                // If you want to allow a certain amount of clock drift, set that here:
-                ClockSkew = TimeSpan.Zero
-            };
-
-            app.UseJwtBearerAuthentication(new JwtBearerOptions
-            {
-                AutomaticAuthenticate = true,
-                AutomaticChallenge = true,
-                TokenValidationParameters = tokenValidationParameters
-            });
-
-            var options = new TokenProviderOptions
-            {
-                Audience = "API End User",
-                Issuer = "api.kova.no",
-                SigningCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256),
-                Expiration = TimeSpan.FromHours(1)
-            };
-
+            // Alle skal få
             app.UseCors(v => v
                     .AllowAnyOrigin()
                     .AllowAnyHeader()
-                    .AllowAnyMethod())
-                .UseMiddleware<TokenProviderMiddleware>(Options.Create(options))
-                .UseMvc();
+                    .AllowAnyMethod());
 
+            // Standard ASPNet API     
+            app.UseMvc();
+
+            // Swagger API documentation
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
